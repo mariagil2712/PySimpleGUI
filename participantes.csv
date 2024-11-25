@@ -1,3 +1,8 @@
-nombreparticipante,tipodoc,numdoc,tel,tipopar,direccion,evento
-maria,pasaporte,919718,3159999999,Estudiante,cra123,discurso
-juan,cedula,987924,3205555555,Profesor,calle456,charla
+maria,pasaporte,919718,3159999999,Estudiante,cra123,Discurso
+juan,cedula,987924,3205555555,Profesor,calle456,Charla
+carlos,pasedeconduccion,978454,3167777777,Colaborador,cra294,Conferencia
+salome,cedula,957622,3223333333,Visitante,calle936,Discurso
+oscar,pasaporte,977744,3104444444,Visitante,cra385,Charla
+salome,cedula,957622,3223333333,Visitante,calle936,Charla
+salome,cedula,957622,3223333333,Visitante,calle936,Conferencia
+jose,pasedeconduccion,958932,3008488888,Colaborador,calle594,Conferencia
