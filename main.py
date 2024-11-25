@@ -1,7 +1,40 @@
 import PySimpleGUI as sg
 import csv
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 sg.theme('NeutralBlue')
+
+# Cargar datos desde los CSV para pandas
+participantes_df = pd.read_csv('participantes.csv')  
+eventos_df = pd.read_csv('eventos.csv') 
+
+def grafico_torta():
+    tipo_participante = participantes_df.iloc[:, 4].value_counts()  # iloc para acceder por índice de columna
+    fig, ax = plt.subplots(figsize=(6, 6)) 
+    ax.pie(tipo_participante, labels=tipo_participante.index, autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')  
+    return fig
+
+def graficobarrasvertical():
+    # Accede a la columna [6] de eventos_df (eventos)
+    eventos = participantes_df.iloc[:, 6]  # Columna de eventos (índice 6)
+    conteo_eventos = eventos.value_counts()
+
+    fig, ax = plt.subplots()
+    ax.bar(conteo_eventos.index, conteo_eventos.values)
+    ax.set_xlabel('Eventos')
+    ax.set_ylabel('Número de Participantes')
+    ax.set_title('Participantes por Evento')
+    return fig
+
+# Función para dibujar el gráfico en pysimplegui (en su canvas)
+def dibujargraficocanvas(fig, canvas_elem):
+    canvas_elem.TKCanvas.delete('all')  # Limpiar canvas
+    figura_canvas = FigureCanvasTkAgg(fig, canvas_elem.TKCanvas)
+    figura_canvas.draw()
+    figura_canvas.get_tk_widget().pack(fill='both', expand=True)
 
 # Archivos de participantes, eventos y configuración definidos
 archivo_eventos = "eventos.csv"
@@ -94,8 +127,10 @@ layoutanalisis = [
 #Interfáz gráficos
 layoutgraficos = [
     [sg.Text("Distribución de participantes por tipo de participante")],
+    [sg.Canvas(key='canvas_torta')],
     [sg.Text("Participantes por evento")],
-    [sg.Text("Eventos por fecha")]
+    [sg.Canvas(key='canvas_barras_vertical')],
+    [sg.Button("Generar Gráficos")]
 ]
 
 
@@ -162,30 +197,30 @@ actualizar_listaP()
 
 #Función para participantes que fueron a todos los eventos
 def parentodoseventos():
-    participantes_eventos = set()  #evita duplicados!!
+    partyeventos = set()  #evita duplicados!!
     for participante in participantes:
-        eventos_participante = [p[6] for p in participantes if p[2] == participante[2]]
-        if len(eventos_participante) == len(eventos):  # Si fue a todos los eventos
-            participantes_eventos.add(participante[0])  
-    return list(participantes_eventos) 
+        listeyp = [p[6] for p in participantes if p[2] == participante[2]]
+        if len(listeyp) == len(eventos):  # Si fue a todos los eventos
+            partyeventos.add(participante[0])  
+    return list(partyeventos) 
 
 # Función para participantes que fueron a al menos un evento
 def almenos1():
-    participantes_eventos = set()  
+    partyeventos = set()  
     for participante in participantes:
-        eventos_participante = [p[6] for p in participantes if p[2] == participante[2]]
-        if eventos_participante:  # Si fue a al menos un evento
-            participantes_eventos.add(participante[0])  
-    return list(participantes_eventos) 
+        listeyp = [p[6] for p in participantes if p[2] == participante[2]]
+        if listeyp:  # Si fue a al menos un evento
+            partyeventos.add(participante[0])  
+    return list(partyeventos) 
 
 # Función para participantes que fueron solo al primer evento
 def soloprimerevento():
-    participantes_eventos = set() 
+    partyeventos = set() 
     for participante in participantes:
-        eventos_participante = [p[6] for p in participantes if p[2] == participante[2]]
-        if len(eventos_participante) == 1 and eventos_participante[0] == eventos[0][0]:  # Si solo fue al primer evento
-            participantes_eventos.add(participante[0])  
-    return list(participantes_eventos)  
+        listeyp = [p[6] for p in participantes if p[2] == participante[2]]
+        if len(listeyp) == 1 and listeyp[0] == eventos[0][0]:  # Si solo fue al primer evento
+            partyeventos.add(participante[0])  
+    return list(partyeventos)  
 
 # Acciones (bucle)
 while True:
@@ -196,14 +231,14 @@ while True:
 
     # Lógica Tab análisis 
     if event == "kanalisis":
-        paranalisis1 = parentodoseventos()
-        paranalisis2 = almenos1()
-        paranalisis3 = soloprimerevento()
+        partanalisis1 = parentodoseventos()
+        partanalisis2 = almenos1()
+        partanalisis3 = soloprimerevento()
 
         # Actualizamos las listbox correspondientes con los resultados
-        window['klista3'].update(paranalisis1)
-        window['klista4'].update(paranalisis2)
-        window['klista5'].update(paranalisis3)
+        window["klista3"].update(partanalisis1)
+        window["klista4"].update(partanalisis2)
+        window["klista5"].update(partanalisis3)
     
     # Lógica Tab Eventos
     if event == "Agregar evento":
@@ -409,4 +444,14 @@ while True:
         window["keliminarE"].update(visible=permitireliminar)
         window["keliminarP"].update(visible=permitireliminar)
 
+    #Lógica Tab Gráficos
+    if event == "Generar Gráficos":
+        # Crear los gráficos
+        fig_torta = grafico_torta()
+        fig_barras_vertical = graficobarrasvertical()
+
+        # Dibujar los gráficos en el canvas
+        dibujargraficocanvas(fig_torta, window['canvas_torta'])
+        dibujargraficocanvas(fig_barras_vertical, window['canvas_barras_vertical'])
+        
 window.close()
