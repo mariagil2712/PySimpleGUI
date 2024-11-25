@@ -3,6 +3,10 @@ import csv
 
 sg.theme('NeutralBlue')
 
+# Archivos de participantes y eventos definidos
+archivo_eventos = 'eventos.csv'
+archivo_participantes = 'participantes.csv'
+
 # Interfaz login
 layoutlogin = [
     [sg.Text("Usuario:"), sg.Input(key="kusuario")],
@@ -15,6 +19,27 @@ eventos = []
 
 # Lista participantes
 participantes = []
+
+# Funciones para subir datos desde los archivos
+def cargar_eventos():
+    with open(archivo_eventos, mode='r', newline='', encoding='utf-8') as archivo:
+        lector = csv.reader(archivo)
+        return [fila for fila in lector]
+
+def cargar_participantes():
+    with open(archivo_participantes, mode='r', newline='', encoding='utf-8') as archivo:
+        lector = csv.reader(archivo)
+        return [fila for fila in lector]
+
+def guardar_eventos():
+    with open(archivo_eventos, mode='w', newline='', encoding='utf-8') as archivo:
+        escritor = csv.writer(archivo)
+        escritor.writerows(eventos)
+
+def guardar_participantes():
+    with open(archivo_participantes, mode='w', newline='', encoding='utf-8') as archivo:
+        escritor = csv.writer(archivo)
+        escritor.writerows(participantes)
 
 # Interfaz eventos
 layouteventos = [
@@ -76,8 +101,12 @@ while True:
         else:
             sg.popup("Usuario o contraseña incorrectos, vuelve a intentarlo") #si las condiciones no se cumplen, se muestra un mensaje de error y se sigue repitiendo hasta q sea necesario
 
+# subir datos iniciales
+eventos = cargar_eventos()
+participantes = cargar_participantes()
+
 # Ventana 
-window = sg.Window("COP 16 - Registro de eventos", layout, margins=(1, 1))
+window = sg.Window("COP 16 - Registro de eventos", layout, finalize=True)
 
 # Función para actualizar la lista de eventos
 def actualizar_listaE():
@@ -92,19 +121,9 @@ def actualizar_comboE():
 def actualizar_listaP():
     window["klista2"].update(participantes)
 
-#Apertura y carga de los archivos eventos y participantes
-
-with open('eventos.txt', 'r') as archivo_e:
-    lector_csv2 = csv.reader(archivo_e)
-    for fila in lector_csv2:
-        eventos.append(fila)
-        actualizar_listaE()
-
-with open('participantes.txt', 'r') as archivo_p:
-    lector_csv3 = csv.reader(archivo_p)
-    for fila in lector_csv3:
-        participantes.append(fila)
-        actualizar_listaP()
+actualizar_listaE()
+actualizar_comboE()
+actualizar_listaP()
 
 # Acciones (bucle)
 while True:
@@ -120,6 +139,7 @@ while True:
             eventos.append([values["knombreevento"], values["klugar"], values["kfecha"], values["khora"], values["kcupo"]])
             actualizar_listaE()
             actualizar_comboE()
+            guardar_eventos()
         window["knombreevento"].update('')
         window["klugar"].update('')
         window["kfecha"].update('')
@@ -135,6 +155,8 @@ while True:
                 index = eventos.index(eventoseleccionado)
                 eventos[index] = [nuevoevento, values["klugar"], values["kfecha"], values["khora"], values["kcupo"]]
                 actualizar_listaE()
+                actualizar_comboE()
+                guardar_eventos()
         window["knombreevento"].update('')
         window["klugar"].update('')
         window["kfecha"].update('')
@@ -148,6 +170,7 @@ while True:
             eventos.remove(eventoseleccionado)
             actualizar_comboE()
             actualizar_listaE()
+            guardar_eventos()
             window["knombreevento"].update('')
             window["klugar"].update('')
             window["kfecha"].update('')
@@ -172,6 +195,7 @@ while True:
             tipopart = values["kcombotipopart"]
             participantes.append([participante, values["ktipdoc"], values["knumdoc"], values["ktelefono"], tipopart, values["kdireccion"], evento_seleccionado])
             actualizar_listaP()
+            guardar_participantes()
         window["knombrepersona"].update('')
         window["ktipdoc"].update('')
         window["knumdoc"].update('')
@@ -188,6 +212,7 @@ while True:
                 index = participantes.index(participanteseleccionado)
                 participantes[index] = [nuevo_participante, values["ktipdoc"], values["knumdoc"], values["ktelefono"], values["kcombotipopart"], values["kdireccion"]]
                 actualizar_listaP()
+                guardar_participantes()
         window["knombrepersona"].update('')
         window["ktipdoc"].update('')
         window["knumdoc"].update('')
@@ -201,6 +226,7 @@ while True:
             participanteseleccionado = values["klista2"][0]
             participantes.remove(participanteseleccionado)
             actualizar_listaP()
+            guardar_participantes()
             window["knombrepersona"].update('')
             window["ktipdoc"].update('')
             window["knumdoc"].update('')
