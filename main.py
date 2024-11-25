@@ -80,9 +80,28 @@ layoutconfiguracion = [
     [sg.Button("Guardar")]
 ]
 
+# Interfaz análisis
+layoutanalisis = [
+    [sg.Text("Participantes que fueron a todos los eventos")],
+    [sg.Listbox(values=[], size=(40, 6), key='klista3', enable_events=True)],
+    [sg.Text("Participantes que fueron a al menos un evento")],
+    [sg.Listbox(values=[], size=(40, 6), key='klista4', enable_events=True)],
+    [sg.Text("Participantes que fueron solo al primer evento")],
+    [sg.Listbox(values=[], size=(40, 6), key='klista5', enable_events=True)],
+    [sg.Button("Hacer análisis", key = "kanalisis")]
+]
+
+#Interfáz gráficos
+layoutgraficos = [
+    [sg.Text("Distribución de participantes por tipo de participante")],
+    [sg.Text("Participantes por evento")],
+    [sg.Text("Eventos por fecha")]
+]
+
+
 # Llamado layout principal
 layout = [
-    [sg.TabGroup([[sg.Tab("Eventos", layouteventos)], [sg.Tab("Participantes", layoutparticipantes)], [sg.Tab("Configuración", layoutconfiguracion)]])]
+    [sg.TabGroup([[sg.Tab("Eventos", layouteventos)], [sg.Tab("Participantes", layoutparticipantes)], [sg.Tab("Análisis", layoutanalisis)], [sg.Tab("Gráficos", layoutgraficos)],[sg.Tab("Configuración", layoutconfiguracion)]])]
 ]
 
 # Se abre ventana de inicio de sesión Y se hace lectura del archivo csv
@@ -141,6 +160,33 @@ actualizar_listaE()
 actualizar_comboE()
 actualizar_listaP()
 
+#Función para participantes que fueron a todos los eventos
+def parentodoseventos():
+    participantes_eventos = set()  #evita duplicados!!
+    for participante in participantes:
+        eventos_participante = [p[6] for p in participantes if p[2] == participante[2]]
+        if len(eventos_participante) == len(eventos):  # Si fue a todos los eventos
+            participantes_eventos.add(participante[0])  
+    return list(participantes_eventos) 
+
+# Función para participantes que fueron a al menos un evento
+def almenos1():
+    participantes_eventos = set()  
+    for participante in participantes:
+        eventos_participante = [p[6] for p in participantes if p[2] == participante[2]]
+        if eventos_participante:  # Si fue a al menos un evento
+            participantes_eventos.add(participante[0])  
+    return list(participantes_eventos) 
+
+# Función para participantes que fueron solo al primer evento
+def soloprimerevento():
+    participantes_eventos = set() 
+    for participante in participantes:
+        eventos_participante = [p[6] for p in participantes if p[2] == participante[2]]
+        if len(eventos_participante) == 1 and eventos_participante[0] == eventos[0][0]:  # Si solo fue al primer evento
+            participantes_eventos.add(participante[0])  
+    return list(participantes_eventos)  
+
 # Acciones (bucle)
 while True:
     event, values = window.read()
@@ -148,6 +194,17 @@ while True:
     if event == sg.WIN_CLOSED or event == 'Cancelar':
         break
 
+    # Lógica Tab análisis 
+    if event == "kanalisis":
+        paranalisis1 = parentodoseventos()
+        paranalisis2 = almenos1()
+        paranalisis3 = soloprimerevento()
+
+        # Actualizamos las listbox correspondientes con los resultados
+        window['klista3'].update(paranalisis1)
+        window['klista4'].update(paranalisis2)
+        window['klista5'].update(paranalisis3)
+    
     # Lógica Tab Eventos
     if event == "Agregar evento":
         try:
