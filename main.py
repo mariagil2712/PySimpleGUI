@@ -3,9 +3,10 @@ import csv
 
 sg.theme('NeutralBlue')
 
-# Archivos de participantes y eventos definidos
-archivo_eventos = 'eventos.csv'
-archivo_participantes = 'participantes.csv'
+# Archivos de participantes, eventos y configuración definidos
+archivo_eventos = "eventos.csv"
+archivo_participantes = "participantes.csv"
+archivo_configuracion = "configuracion.csv"
 
 # Interfaz login
 layoutlogin = [
@@ -31,6 +32,11 @@ def cargar_participantes():
         lector = csv.reader(archivo)
         return [fila for fila in lector]
 
+def cargar_configuracion():
+    with open(archivo_configuracion, mode='r', newline='', encoding='utf-8') as archivo:
+        lector = csv.reader(archivo)
+        return [fila for fila in lector][0]  # Devuelve la primera fila como lista
+
 def guardar_eventos():
     with open(archivo_eventos, mode='w', newline='', encoding='utf-8') as archivo:
         escritor = csv.writer(archivo)
@@ -40,6 +46,11 @@ def guardar_participantes():
     with open(archivo_participantes, mode='w', newline='', encoding='utf-8') as archivo:
         escritor = csv.writer(archivo)
         escritor.writerows(participantes)
+
+def guardar_configuracion(config):
+    with open(archivo_configuracion, mode='w', newline='', encoding='utf-8') as archivo:
+        escritor = csv.writer(archivo)
+        escritor.writerow(config)
 
 # Interfaz eventos
 layouteventos = [
@@ -57,7 +68,7 @@ layoutparticipantes = [
     [sg.Text("Teléfono:"), sg.InputText(key="ktelefono"), sg.Text("Tipo participante:"), sg.Combo(["Estudiante", "Profesor", "Colaborador", "Visitante"], key="kcombotipopart")],
     [sg.Text("Dirección:"), sg.InputText(key="kdireccion"), sg.Text("Foto:"), sg.Input(key="kFileF", enable_events=True), sg.FileBrowse(key="kbrowse2")],
     [sg.Button("Agregar participante"), sg.Button("Modificar participante",key="kmodificarP"), sg.Button("Eliminar participante",key="keliminarP")],
-    [sg.Listbox(values=[], size=(40, 10), key='klista2', enable_events=True), sg.Image(key="kfoto", size=(20,20))]
+    [sg.Listbox(values=[], size=(50, 10), key='klista2', enable_events=True), sg.Image(key="kfoto", size=(20,20))]
 ]
 
 # Interfaz configuración
@@ -134,36 +145,63 @@ while True:
 
     # Lógica Tab Eventos
     if event == "Agregar evento":
-        evento = values["knombreevento"]
-        if evento:
-            eventos.append([values["knombreevento"], values["klugar"], values["kfecha"], values["khora"], values["kcupo"]])
+        try:
+            nombre_evento = values["knombreevento"]
+            if not nombre_evento:
+                raise ValueError("El nombre del evento no puede estar vacío.")
+
+            if any(evento[0] == nombre_evento for evento in eventos):
+                raise ValueError("Ya existe un evento con este nombre.")
+
+            lugar = values["klugar"]
+            fecha = values["kfecha"]
+            hora = values["khora"]
+            cupo = values["kcupo"]
+            imagen = values["kFileE"]
+
+            if not lugar or not fecha or not hora or not cupo:
+                raise ValueError("Todos los campos deben ser completados.")
+
+            if not cupo.isdigit():
+                raise ValueError("El cupo debe ser un número válido (dígitos numericos).")
+
+            eventos.append([nombre_evento, lugar, fecha, hora, cupo])
+            guardar_eventos()
             actualizar_listaE()
             actualizar_comboE()
-            guardar_eventos()
-        window["knombreevento"].update('')
-        window["klugar"].update('')
-        window["kfecha"].update('')
-        window["khora"].update('')
-        window["kcupo"].update('')
-        window["kFileE"].update('')
+        except Exception as e:
+            sg.popup_error(f"Error al agregar evento: {e}")
 
     if event == "kmodificarE":
-        if values["klista1"]:
-            eventoseleccionado = values["klista1"][0]
-            nuevoevento = values["knombreevento"]
-            if nuevoevento:
-                index = eventos.index(eventoseleccionado)
-                eventos[index] = [nuevoevento, values["klugar"], values["kfecha"], values["khora"], values["kcupo"]]
-                actualizar_listaE()
-                actualizar_comboE()
-                guardar_eventos()
-        window["knombreevento"].update('')
-        window["klugar"].update('')
-        window["kfecha"].update('')
-        window["khora"].update('')
-        window["kcupo"].update('')
-        window["kFileE"].update('')
+        try:
+            if values["klista1"]:
+                eventoseleccionado = values["klista1"][0]
+                nuevoevento = values["knombreevento"]
+                lugar = values["klugar"]
+                fecha = values["kfecha"]
+                hora = values["khora"]
+                cupo = values["kcupo"]
+                imagen = values["kFileE"]
+                if not nuevoevento or not lugar or not fecha or not hora or not cupo:
+                    raise ValueError("Todos los campos deben ser completados.")
+                if not cupo.isdigit():
+                    raise ValueError("El cupo debe ser un número válido (dígitos numericos).")
+                if nuevoevento:
+                    index = eventos.index(eventoseleccionado)
+                    eventos[index] = [nuevoevento, values["klugar"], values["kfecha"], values["khora"], values["kcupo"]]
+                    actualizar_listaE()
+                    actualizar_comboE()
+                    guardar_eventos()
+            window["knombreevento"].update('')
+            window["klugar"].update('')
+            window["kfecha"].update('')
+            window["khora"].update('')
+            window["kcupo"].update('')
+            window["kFileE"].update('')
 
+        except Exception as e:
+            sg.popup_error(f"Error al modificar evento: {e}")
+    
     if event == "keliminarE":
         if values["klista1"]:
             eventoseleccionado = values["klista1"][0]
@@ -189,38 +227,73 @@ while True:
 
     # Lógica Tab Participantes
     if event == "Agregar participante":
-        participante = values["knombrepersona"]
-        if participante:
-            evento_seleccionado = values["kcomboeventos"]
-            tipopart = values["kcombotipopart"]
-            participantes.append([participante, values["ktipdoc"], values["knumdoc"], values["ktelefono"], tipopart, values["kdireccion"], evento_seleccionado])
-            actualizar_listaP()
-            guardar_participantes()
-        window["knombrepersona"].update('')
-        window["ktipdoc"].update('')
-        window["knumdoc"].update('')
-        window["ktelefono"].update('')
-        window["kdireccion"].update('')
-        window["kcomboeventos"].update('')
-        window["kFileF"].update('')
+        try:
+            participante = values["knombrepersona"]
+            if participante:
+                evento_seleccionado = values["kcomboeventos"]
+                tipopart = values["kcombotipopart"]
+                numdoc = values["knumdoc"]
+                tipodoc = values["ktipdoc"]
+                telefono = values["ktelefono"]
+                direccion = values["kdireccion"]
 
-    if event == "kmodificarP":
-        if values["klista2"]:
-            participanteseleccionado = values["klista2"][0]
-            nuevo_participante = values["knombrepersona"]
-            if nuevo_participante:
-                index = participantes.index(participanteseleccionado)
-                participantes[index] = [nuevo_participante, values["ktipdoc"], values["knumdoc"], values["ktelefono"], values["kcombotipopart"], values["kdireccion"]]
+                if not participante or not evento_seleccionado or not tipopart or not numdoc or not tipodoc or not telefono or not direccion:
+                    raise ValueError("Todos los campos deben ser completados.")
+                
+                if any(participante[2] == numdoc for participante in participantes):
+                    raise ValueError("Ya existe un participante con este número de documento.")
+                                
+                if not numdoc.isdigit():
+                    raise ValueError("El número de documento debe ser válido (dígitos numericos).")
+                    
+                participantes.append([participante, values["ktipdoc"], values["knumdoc"], values["ktelefono"], tipopart, values["kdireccion"], evento_seleccionado])
                 actualizar_listaP()
                 guardar_participantes()
-        window["knombrepersona"].update('')
-        window["ktipdoc"].update('')
-        window["knumdoc"].update('')
-        window["ktelefono"].update('')
-        window["kdireccion"].update('')
-        window["kcomboeventos"].update('')
-        window["kFileF"].update('')
+            window["knombrepersona"].update('')
+            window["ktipdoc"].update('')
+            window["knumdoc"].update('')
+            window["ktelefono"].update('')
+            window["kdireccion"].update('')
+            window["kcomboeventos"].update('')
+            window["kFileF"].update('')
 
+        except Exception as e:
+            sg.popup_error(f"Error al agregar participante: {e}")
+    
+    if event == "kmodificarP":
+        try: 
+            if values["klista2"]:
+                participanteseleccionado = values["klista2"][0]
+                nuevo_participante = values["knombrepersona"]
+                evento_seleccionado = values["kcomboeventos"]
+                tipopart = values["kcombotipopart"]
+                numdoc = values["knumdoc"]
+                tipodoc = values["ktipdoc"]
+                telefono = values["ktelefono"]
+                direccion = values["kdireccion"]
+                
+                if not nuevo_participante or not evento_seleccionado or not tipopart or not numdoc or not tipodoc or not telefono or not direccion:
+                    raise ValueError("Todos los campos deben ser completados.")
+
+                if not numdoc.isdigit():
+                    raise ValueError("El número de documento debe ser válido (dígitos numericos).")
+                    
+                if nuevo_participante:
+                    index = participantes.index(participanteseleccionado)
+                    participantes[index] = [nuevo_participante, values["ktipdoc"], values["knumdoc"], values["ktelefono"], values["kcombotipopart"], values["kdireccion"]]
+                    actualizar_listaP()
+                    guardar_participantes()
+            window["knombrepersona"].update('')
+            window["ktipdoc"].update('')
+            window["knumdoc"].update('')
+            window["ktelefono"].update('')
+            window["kdireccion"].update('')
+            window["kcomboeventos"].update('')
+            window["kFileF"].update('')
+
+        except Exception as e:
+            sg.popup_error(f"Error al modificar participante: {e}")
+    
     if event == "keliminarP":
         if values["klista2"]:
             participanteseleccionado = values["klista2"][0]
