@@ -22,20 +22,20 @@ eventos = []
 participantes = []
 
 # Funciones para subir datos desde los archivos
-def cargar_eventos():
+def subir_eventos():
     with open(archivo_eventos, mode='r', newline='', encoding='utf-8') as archivo:
         lector = csv.reader(archivo)
         return [fila for fila in lector]
 
-def cargar_participantes():
+def subir_participantes():
     with open(archivo_participantes, mode='r', newline='', encoding='utf-8') as archivo:
         lector = csv.reader(archivo)
         return [fila for fila in lector]
 
-def cargar_configuracion():
+def subir_configuracion():
     with open(archivo_configuracion, mode='r', newline='', encoding='utf-8') as archivo:
         lector = csv.reader(archivo)
-        return [fila for fila in lector][0]  # Devuelve la primera fila como lista
+        return [fila for fila in lector][0] 
 
 def guardar_eventos():
     with open(archivo_eventos, mode='w', newline='', encoding='utf-8') as archivo:
@@ -47,10 +47,10 @@ def guardar_participantes():
         escritor = csv.writer(archivo)
         escritor.writerows(participantes)
 
-def guardar_configuracion(config):
+def guardar_configuracion():
     with open(archivo_configuracion, mode='w', newline='', encoding='utf-8') as archivo:
         escritor = csv.writer(archivo)
-        escritor.writerow(config)
+        escritor.writerow(['true' if valor else 'false' for valor in configuracion])
 
 # Interfaz eventos
 layouteventos = [
@@ -113,11 +113,16 @@ while True:
             sg.popup("Usuario o contraseña incorrectos, vuelve a intentarlo") #si las condiciones no se cumplen, se muestra un mensaje de error y se sigue repitiendo hasta q sea necesario
 
 # subir datos iniciales
-eventos = cargar_eventos()
-participantes = cargar_participantes()
+eventos = subir_eventos()
+participantes = subir_participantes()
 
 # Ventana 
 window = sg.Window("COP 16 - Registro de eventos", layout, finalize=True)
+configuracion = [valor.lower() == 'true' for valor in subir_configuracion()] 
+window['kcheck1'].update(value=configuracion[0])
+window['kcheck2'].update(value=configuracion[1])
+window['kcheck3'].update(value=configuracion[2])
+window['kcheck4'].update(value=configuracion[3])
 
 # Función para actualizar la lista de eventos
 def actualizar_listaE():
@@ -321,10 +326,17 @@ while True:
 
     # Lógica Tab Configuración
     if event == "Guardar":
+        configuracion = [
+            values['kcheck1'],
+            values['kcheck2'],
+            values['kcheck3'],
+            values['kcheck4']
+        ]       
         validaraforo = values["kcheck1"]
         solicitarimagenes = values["kcheck2"]
         permitirmodificar = values["kcheck3"]
         permitireliminar = values["kcheck4"]
+        guardar_configuracion()
         sg.popup("Configuración guardada", title="Configuración")
 
         window["kbrowse1"].update(visible=solicitarimagenes)
